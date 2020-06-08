@@ -11,10 +11,10 @@ import test
 import logger
 import loader
 
-model_names = ['vgg16', 'vgg19', 'vgg16bn', 'vgg19bn', 'resnet50', 'resnet101']
-loss_names = ['l1', 'l2']
+model_names = ["resnet50"]
+loss_names = ["cce", "ccenoisy"]
 
-data_names = ['MNIST']
+data_names = ["food101"]
 
 parser = argparse.ArgumentParser(description='UTKFace Training')
 
@@ -24,34 +24,34 @@ parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                     ' | '.join(model_names) +
                     ' (default: resnet50)')
-parser.add_argument('--data', metavar='DATA', default='MNIST',
+parser.add_argument('--data', metavar='DATA', default="food101",
                     choices=data_names,
                     help='dataset: ' +
                     ' | '.join(data_names) +
-                    ' (default: MNIST)')
+                    ' (default: food101)')
 
 # arguments for the epochs, batchsize, loss
-parser.add_argument('--epochs', default=300, type=int, metavar='N',
-                    help='number of total epochs to run (default: 300)')
+parser.add_argument('--epochs', default=30, type=int, metavar='N',
+                    help='number of total epochs to run (default: 30)')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=64, type=int,
-                    help='mini-batch size (default: 64)')
-parser.add_argument('-c', '--criterion', metavar='LOSS', default='l1',
+parser.add_argument('-b', '--batch-size', default=128, type=int,
+                    help='mini-batch size (default: 128)')
+parser.add_argument('-c', '--criterion', metavar='LOSS', default="cce",
                     choices=loss_names,
                     help='loss function: ' +
                     ' | '.join(loss_names) +
-                    ' (default: l1)')
+                    ' (default: cce)')
 
 # arguments for the optimizer
 parser.add_argument('--optimizer', dest='optimizer', default='SGD', type=str,
                     help='Set optimizer.')
 parser.add_argument('-r', '--lr', default=0.002, type=float,
                     metavar='LR', help='initial learning rate (default 0.002)')
-parser.add_argument('-m', '--momentum', default=0.2, type=float, metavar='M',
+parser.add_argument('-m', '--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
-parser.add_argument('--weight-decay', '-w', default=1e-4, type=float,
-                    metavar='W', help='weight decay (default: 1e-4)')
+parser.add_argument('--weight-decay', '-w', default=5e-3, type=float,
+                    metavar='W', help='weight decay (default: 5e-3)')
 
 # arguments for others
 parser.add_argument('-j', '--workers', default=10, type=int, metavar='N',

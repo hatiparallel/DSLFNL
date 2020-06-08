@@ -4,46 +4,6 @@ import torch.nn as nn
 import torchvision.models
 
 
-
-class VGGUncertainty(nn.Module):
-    def __init__(self, clip_features, kind = '16'):
-        super(VGGUncertainty, self).__init__()
-        self.vgg = call_partial_vgg(clip_features, kind)
-        self.output = nn.Linear(4096, 1)
-        self.uncertainty = nn.Linear(4096, 1)
-
-    def forward(self, x):
-        x = self.vgg(x)
-        y = self.output(x)
-        u = self.uncertainty(x)
-
-        return y, u
-
-def call_partial_vgg(clip_features, kind):
-    model = torchvision.models.vgg16()
-    if kind == '19':
-        model = torchvision.models.vgg19()
-    elif kind == 'bn16':
-        model = torchvision.models.vgg16_bn()
-    elif kind == 'bn19':
-        model = torchvision.models.vgg19_bn()
-    model.classifier = nn.Sequential(
-        nn.Linear(512*7*7, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-        nn.Linear(4096, 4096),
-        nn.ReLU(True),
-        nn.Dropout(),
-    )
-
-    if clip_features:
-        for p in model.features.parameters():
-            p.requires_grad = False
-            
-    return model
-
-
-
 class ResNet(nn.Module):
     def __init__(self, layers):
 

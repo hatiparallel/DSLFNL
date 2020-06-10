@@ -37,11 +37,16 @@ class Result(object):
     def __init__(self):
         self.count = 0
 
-        def mae_updater(target, pred):
-            return np.abs(target - pred)
-        def mae_calculator(value, count):
+        def accuracy_updater(target, pred):
+            if target == np.argmax(pred):
+                return 1
+            else:
+                return 0
+
+        def accuracy_calculator(value, count):
             return value / count
-        self.mae = Metric(0, mae_updater, mae_calculator)
+
+        self.accuracy = Metric(0, accuracy_updater, accuracy_calculator)
 
         self.loss = LossMetric(0)
 

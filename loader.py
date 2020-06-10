@@ -18,23 +18,31 @@ def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 
-def find_classes(dir):
-    classes = [d for d in os.listdir(
-        dir) if os.path.isdir(os.path.join(dir, d))]
-    classes.sort()
-    class_to_idx = {classes[i]: i for i in range(len(classes))}
-    return classes, class_to_idx
+def make_dataset(root, is_train):
+    datanames_file = os.path.join(root, "meta", "train.txt")
+    if not is_train:
+        datanames_file = os.path.join(root, "meta", "test.txt")
 
-
-def make_dataset(dir):
+    class_id = 0
     images = []
-    for filename in sorted(os.listdir(dir)):
-        if filename.split('.')[-1] != "jpg":
-            continue
-        # filename : [age]_[gender]_[race]_[date&time].jpg
-        path = os.path.join(dir, filename)
-        target = float(filename.split('_')[0])
+
+    f = open(datanames_file, 'r')
+    line = f.readline().strip()
+    previous_class_name = list(line.split('/'))[0]
+
+    while line:
+        path = os.path.join(root, images, (line + ".jpg"))
+        class_name = list(line.split('/'))[0]
+        if class_name != previous_class_name:
+            class_id += 1
+        target = class_id
+
         images.append((path, target))
+
+        previous_class_name = class_name
+        line = f.readline().strip()
+    f.close()
+
     return images
 
 
@@ -51,10 +59,12 @@ def transform_image(img, random):
     return transform(img)
 
 
-class MNIST(data.Dataset):
+class food101(data.Dataset):
 
-    def __init__(self, root, random = True):
-        imgs = make_dataset(root)
+    def __init__(self, is_train, random = True):
+        root = "../../../srv/datasets/FoodLog/food-101/"
+
+        imgs = make_dataset(root, is_train)
         if len(imgs) == 0:
             raise(RuntimeError("Found 0 images in subfolders of: " + root + "\n"
                                "Supported image extensions are: " + ",".join(IMG_EXTENSIONS)))
@@ -62,6 +72,7 @@ class MNIST(data.Dataset):
         self.root = root
         self.imgs = imgs
         self.random = random
+        self.is_train = is_train
 
     def __getitem__(self, idx):
         """

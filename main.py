@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torchvision
 import argparse
 import os
@@ -11,10 +12,10 @@ import test
 import logger
 import loader
 
-model_names = ["resnet50"]
-loss_names = ["cce", "ccenoisy"]
+model_names = ['resnet50']
+loss_names = ['cce', 'ccenoisy']
 
-data_names = ["food101"]
+data_names = ['food101']
 
 parser = argparse.ArgumentParser(description='UTKFace Training')
 
@@ -24,7 +25,7 @@ parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                     ' | '.join(model_names) +
                     ' (default: resnet50)')
-parser.add_argument('--data', metavar='DATA', default="food101",
+parser.add_argument('--data', metavar='DATA', default='food101',
                     choices=data_names,
                     help='dataset: ' +
                     ' | '.join(data_names) +
@@ -37,7 +38,7 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=128, type=int,
                     help='mini-batch size (default: 128)')
-parser.add_argument('-c', '--criterion', metavar='LOSS', default="cce",
+parser.add_argument('-c', '--criterion', metavar='LOSS', default='cce',
                     choices=loss_names,
                     help='loss function: ' +
                     ' | '.join(loss_names) +
@@ -78,75 +79,67 @@ def main():
     test_csv = os.path.join(output_directory, 'test.csv')
     best_txt = os.path.join(output_directory, 'best.txt')
     
-    print("=> creating data loaders ...")
-    if args.data == 'MNIST':
-        all_dataset = MNIST(datadir)
-        train_size = len(all_dataset) // 5 * 4
-        test_size = len(all_dataset) // 10
-        val_size = len(all_dataset) - (train_size + test_size)
-        train_dataset, test_dataset, val_dataset = torch.utils.data.random_split(all_dataset, [train_size, test_size, val_size])
+    print('=> creating data loaders ...')
+    if args.data == 'Food101':
+        train_set = Food101(datadir, True, random = True)
+        test_set = Food101(datadir, False, random = False)
     else:
         raise RuntimeError('Dataset not found.' +
                            'The dataset must be either of nyudepthv2 or kitti.')
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True, sampler=None)
+        train_set, batch_size=args.batch_size, shuffle=True,
+        num_workers=args.workers)
     # set batch size to be 1 for validation
-    test_loader = torch.utils.data.DataLoader(test_dataset,
-                                             batch_size=1, shuffle=False, num_workers=args.workers, pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(test_set,
+                                             batch_size=1, shuffle=False, num_workers=args.workers)
 
-    print("=> data loaders created.")
+    print('=> data loaders created.')
 
     # optionally resume from a checkpoint
     if args.start_epoch != 0:
         assert os.path.isfile(args.resume), \
-            "=> no checkpoint found at '{}'".format(args.resume)
-        print("=> loading checkpoint '{}'".format(args.resume))
+            '=> no checkpoint found at '{}''.format(args.resume)
+        print('=> loading checkpoint '{}''.format(args.resume))
         checkpoint = torch.load(args.resume)
         args.start_epoch = checkpoint['epoch'] + 1
         best_result = checkpoint['best_result']
         model = checkpoint['model']
         optimizer = checkpoint['optimizer']
-        print("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
+        print('=> loaded checkpoint (epoch {})'.format(checkpoint['epoch']))
 
     # create new model
     else:
         # define model
-        print("=> creating Model ({}) ...".format(args.arch))
+        print('=> creating Model ({}) ...'.format(args.arch))
 
-        if args.arch == 'vgg16':
-            model = vgg16()
+        if args.arch == 'resnet50':
+            model = models.ResNet(50)
         else:
-            raise RuntimeError("model not found")
+            raise RuntimeError('model not found')
 
-        print("=> model created.")
+        print('=> model created.')
 
         
     # define loss function (criterion) and optimizer
-    if args.criterion == 'l2':
-        criterion = criteria.MaskedMSELoss().cuda()
-    elif args.criterion == 'l1':
-        criterion = criteria.MaskedL1Loss().cuda()
+    if args.criterion == 'cce' or args.criterion == 'ccenoisy':
+        criterion = nn.CrossEntropyLoss().cuda()
+    else:
+        raise RuntimeError('loss function not found')
 
 
-    if args.optimizer == 'RMSProp':
-        optimizer = torch.optim.RMSprop(
-            model.parameters(), lr=args.lr, weight_decay=1e-04)
-    elif args.optimizer == 'Adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr = args.lr, weight_decay = args.weight_decay)
-    elif  args.optimizer == 'SGD':
+    if  args.optimizer == 'SGD':
         optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                     momentum=args.momentum,
                                     weight_decay=args.weight_decay)
     else:
-        raise RuntimeError("optimizer not defined")
+        raise RuntimeError('optimizer not defined')
 
     optimizer_scheduler = lr_scheduler.StepLR(optimizer, args.epochs//3)
 
     model = model.cuda()
     print(model)
-    print("=> model transferred to GPU.")
+    print('=> model transferred to GPU.')
 
     train_logger, test_logger = None, None
 
@@ -177,5 +170,5 @@ def main():
             'optimizer': optimizer,
         }, is_best, epoch, output_directory)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

@@ -7,6 +7,8 @@ import torch
 import torch.utils.data as data
 from torchvision import transforms
 
+from typings import Tuple
+
 from PIL import Image
 
 IMG_EXTENSIONS = [
@@ -19,9 +21,9 @@ def is_image_file(filename):
 
 
 def make_dataset(root, is_train):
-    datanames_file = os.path.join(root, "meta", "train.txt")
+    datanames_file = os.path.join(root, 'meta', 'train.txt')
     if not is_train:
-        datanames_file = os.path.join(root, "meta", "test.txt")
+        datanames_file = os.path.join(root, 'meta', 'test.txt')
 
     class_id = 0
     images = []
@@ -31,7 +33,7 @@ def make_dataset(root, is_train):
     previous_class_name = list(line.split('/'))[0]
 
     while line:
-        path = os.path.join(root, images, (line + ".jpg"))
+        path = os.path.join(root, images, (line + '.jpg'))
         class_name = list(line.split('/'))[0]
         if class_name != previous_class_name:
             class_id += 1
@@ -59,33 +61,33 @@ def transform_image(img, random):
     return transform(img)
 
 
-class food101(data.Dataset):
+class Food101(data.Dataset):
 
     def __init__(self, is_train, random = True):
-        root = "../../../srv/datasets/FoodLog/food-101/"
+        root = ''../../../srv/datasets/FoodLog/food-101/'
 
         imgs = make_dataset(root, is_train)
         if len(imgs) == 0:
-            raise(RuntimeError("Found 0 images in subfolders of: " + root + "\n"
-                               "Supported image extensions are: " + ",".join(IMG_EXTENSIONS)))
+            raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
+                               'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
 
         self.root = root
         self.imgs = imgs
         self.random = random
         self.is_train = is_train
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx : int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
-            index (int): Index
+            index
 
         Returns:
-            tuple: (input_tensor, depth_tensor)
+            tuple: (input_tensor, target_tensor)
         """
         path, target = self.imgs[idx]
         target = torch.tensor([target], requires_grad = False)
-        input_tensor = transform_image(Image.open(path).convert("RGB"), random = self.random)
-        return input_tensor, target, idx, r_fix
+        input_tensor = transform_image(Image.open(path).convert('RGB'), random = self.random)
+        return input_tensor, target
 
     def __len__(self):
         return len(self.imgs)

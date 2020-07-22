@@ -10,7 +10,7 @@ import misc
 import train
 import test
 import logger
-import loader
+from loader import Food101
 
 model_names = ['resnet50']
 loss_names = ['cce', 'ccenoisy']
@@ -25,7 +25,7 @@ parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                     ' | '.join(model_names) +
                     ' (default: resnet50)')
-parser.add_argument('--data', metavar='DATA', default='food101',
+parser.add_argument('--data', metavar='DATA', default='Food101',
                     choices=data_names,
                     help='dataset: ' +
                     ' | '.join(data_names) +
@@ -75,17 +75,18 @@ def main():
     output_directory = misc.get_output_directory(args)
     if not os.path.exists(output_directory):
         os.makedirs(output_directory)
+
     train_csv = os.path.join(output_directory, 'train.csv')
     test_csv = os.path.join(output_directory, 'test.csv')
     best_txt = os.path.join(output_directory, 'best.txt')
     
     print('=> creating data loaders ...')
     if args.data == 'Food101':
-        train_set = Food101(datadir, True, random = True)
-        test_set = Food101(datadir, False, random = False)
+        train_set = Food101(True, random = True)
+        test_set = Food101(False, random = False)
     else:
         raise RuntimeError('Dataset not found.' +
-                           'The dataset must be either of nyudepthv2 or kitti.')
+                           'The dataset must be either of Food101 or Clothing1M.')
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=args.batch_size, shuffle=True,

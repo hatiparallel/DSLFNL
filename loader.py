@@ -33,7 +33,7 @@ def make_dataset(root, is_train):
     previous_class_name = list(line.split('/'))[0]
 
     while line:
-        path = os.path.join(root, images, (line + '.jpg'))
+        path = os.path.join(root, 'images', (line + '.jpg'))
         class_name = list(line.split('/'))[0]
         if class_name != previous_class_name:
             class_id += 1

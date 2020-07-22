@@ -7,7 +7,7 @@ import torch
 import torch.utils.data as data
 from torchvision import transforms
 
-from typings import Tuple
+from typing import Tuple
 
 from PIL import Image
 
@@ -64,7 +64,7 @@ def transform_image(img, random):
 class Food101(data.Dataset):
 
     def __init__(self, is_train, random = True):
-        root = ''../../../srv/datasets/FoodLog/food-101/'
+        root = '../../../srv/datasets/FoodLog/food-101/'
 
         imgs = make_dataset(root, is_train)
         if len(imgs) == 0:

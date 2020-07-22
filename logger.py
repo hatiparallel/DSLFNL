@@ -11,7 +11,8 @@ class Metric(object):
     def update(self, target, pred):
         self.value += self.updater(target, pred)
     def calculate(self, count):
-        return self.value = self.calculator(self.value, count)
+        self.value = self.calculator(self.value, count)
+        return self.value
 
 
 class LossMetric(object):
@@ -87,7 +88,7 @@ class Logger(object):
                 log_dict[key] = value
                 setattr(self, key, logs)
 
-        wwith open(file, 'a') as csvfile:
+        with open(file, 'a') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writerow(log_dict)
 

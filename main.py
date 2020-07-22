@@ -99,8 +99,8 @@ def main():
     # optionally resume from a checkpoint
     if args.start_epoch != 0:
         assert os.path.isfile(args.resume), \
-            '=> no checkpoint found at '{}''.format(args.resume)
-        print('=> loading checkpoint '{}''.format(args.resume))
+            '=> no checkpoint found at "{}"'.format(args.resume)
+        print('=> loading checkpoint "{}"'.format(args.resume))
         checkpoint = torch.load(args.resume)
         args.start_epoch = checkpoint['epoch'] + 1
         best_result = checkpoint['best_result']

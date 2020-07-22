@@ -115,7 +115,7 @@ def main():
         print('=> creating Model ({}) ...'.format(args.arch))
 
         if args.arch == 'resnet50':
-            model = models.ResNet(50)
+            model = torchvision.models.resnet50()
         else:
             raise RuntimeError('model not found')
 

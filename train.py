@@ -18,6 +18,7 @@ def train(train_loader, model, criterion, optimizer):
         data_time = time.time() - end
 
         # compute pred
+        
         end = time.time()
         pred = model(input)
         loss = criterion(pred, target)

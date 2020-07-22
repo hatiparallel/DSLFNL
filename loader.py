@@ -85,7 +85,7 @@ class Food101(data.Dataset):
             tuple: (input_tensor, target_tensor)
         """
         path, target = self.imgs[idx]
-        target = torch.tensor([target], requires_grad = False)
+        target = torch.tensor(target, requires_grad = False)
         input_tensor = transform_image(Image.open(path).convert('RGB'), random = self.random)
         return input_tensor, target
 

@@ -49,8 +49,8 @@ def make_dataset(root, is_train):
 
 
 def transform_image(img, random):
-    resize = transforms.Resize((64, 64))
-    crop = transforms.RandomCrop(64, padding=4)
+    resize = transforms.Resize(256)
+    crop = transforms.RandomCrop(224)
     flip = transforms.RandomHorizontalFlip()
     totensor = transforms.ToTensor()
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])

@@ -4,7 +4,7 @@ import time
 
 import logger
 
-def train(train_loader, model, criterion, optimizer, epoch, datadir):
+def train(train_loader, model, criterion, optimizer):
     
     # switch to train mode
     model.train()

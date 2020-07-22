@@ -144,8 +144,7 @@ def main():
     train_logger, test_logger = None, None
 
     for epoch in range(args.start_epoch, args.epochs):
-        train_result = train.train(train_loader, model, criterion,
-                optimizer, epoch, datadir, args.train_scheduling)
+        train_result = train.train(train_loader, model, criterion, optimizer)
 
         if epoch == 0:
             train_logger = logger.Logger(output_directory, 0, train_result)

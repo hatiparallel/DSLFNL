@@ -1,6 +1,9 @@
 import numpy as np
 import torch
 import csv
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
 
 # base class for metrics
 class Metric(object):
@@ -65,31 +68,41 @@ class Result(object):
 
         for key, value in self.__dict__.items():
             if value.__class__.__name__ == "Metric" or value.__class__.__name__ == "LossMetric":
-                getattr(self, key).calculate(self, self.count)
+                getattr(self, key).calculate(self.count)
 
 # use once for one training
 # save and visualize the results of each epoch
 class Logger(object):
-    def __init__(self, dir, start_epoch, result):
-        self.dir = dir
-        self.epochs = [start_epoch]
-        for key, value in result.__dict__.items():
-            if value.__class__.__name__ == "Metric" or value.__class__.__name__ == "LossMetric":
-                log = getattr(result, key).value
-                setattr(self, key, [log])
+    def __init__(self, place, result, file):
+        self.file = file
+        self.place = place
+        self.fieldnames = []
 
-    def append(self, result, file):
         log_dict = {}
 
         for key, value in result.__dict__.items():
-            if value.__class__.__name__ == "Metric":
-                log = getattr(result, key)
-                logs = getattr(self, key).append(log)
-                log_dict[key] = value
+            if value.__class__.__name__ == "Metric" or value.__class__.__name__ == "LossMetric":
+                log_dict[key] = value.value
+                self.fieldnames.append(key)
+                setattr(self, key, [value])
+
+        with open(self.file, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
+            writer.writeheader()
+            writer.writerow(log_dict)
+
+    def append(self, result):
+        log_dict = {}
+
+        for key, value in result.__dict__.items():
+            if value.__class__.__name__ == "Metric" or value.__class__.__name__ == "LossMetric":
+                logs = getattr(self, key)
+                logs.append(value)
+                log_dict[key] = value.value
                 setattr(self, key, logs)
 
-        with open(file, 'a') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        with open(self.file, 'a') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=self.fieldnames)
             writer.writerow(log_dict)
 
     def write_into_file(self, name):

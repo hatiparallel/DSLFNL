@@ -83,7 +83,7 @@ def main():
     print('=> creating data loaders ...')
     if args.data == 'Food101':
         train_set = Food101(True, random = True)
-        test_set = Food101(False, random = False)
+        test_set = Food101(False, random = True)
     else:
         raise RuntimeError('Dataset not found.' +
                            'The dataset must be either of Food101 or Clothing1M.')
@@ -148,7 +148,7 @@ def main():
         train_result = train.train(train_loader, model, criterion, optimizer)
 
         if epoch == 0:
-            train_logger = logger.Logger(output_directory, 0, train_result)
+            train_logger = logger.Logger(output_directory, train_result, train_csv)
         else:
             train_logger.append(train_result)
 
@@ -157,7 +157,7 @@ def main():
         test_result = test.validate(test_loader, model, criterion, optimizer)
 
         if epoch == 0:
-            test_logger = logger.Logger(output_directory, 0, test_result)
+            test_logger = logger.Logger(output_directory, test_result, test_csv)
         else:
             test_logger.append(test_result)
 
@@ -166,9 +166,10 @@ def main():
             'epoch': epoch,
             'arch': args.arch,
             'model': model,
-            'best_result': best_result,
-            'optimizer': optimizer,
-        }, is_best, epoch, output_directory)
+        }, epoch, output_directory)
+
+    train_logger.write_into_file('train')
+    test_logger.write_into_file('test')
 
 if __name__ == '__main__':
     main()

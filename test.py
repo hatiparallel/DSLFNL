@@ -43,7 +43,7 @@ def validate(val_loader, model, criterion, optimizer, write_to_file=True):
         target = target.cpu().detach().numpy()
         pred = pred.cpu().detach().numpy()
         loss = loss.cpu().detach().item()
-        result.update(target, pred, cpu)
+        result.update(target, pred, loss)
         end = time.time()
 
     result.calculate()

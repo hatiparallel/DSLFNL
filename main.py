@@ -115,7 +115,8 @@ def main():
         print('=> creating Model ({}) ...'.format(args.arch))
 
         if args.arch == 'resnet50':
-            model = torchvision.models.resnet50()
+            model = torchvision.models.resnet50(pretrained = True)
+            model.fc = nn.Linear(512*4, 101)
         else:
             raise RuntimeError('model not found')
 

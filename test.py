@@ -34,8 +34,8 @@ def validate(val_loader, model, criterion, optimizer, write_to_file=True):
         # compute output
         end = time.time()
         with torch.no_grad():
-            pred = model(input)
-            loss = criterion(pred, target)
+            _, pred = model(input)
+            loss = criterion(pred, target, None)
 
         gpu_time = time.time() - end
 

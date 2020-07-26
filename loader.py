@@ -32,11 +32,14 @@ def make_dataset(root, is_train):
     line = f.readline().strip()
     previous_class_name = list(line.split('/'))[0]
 
+    classwise_idx = [0]
+
     while line:
         path = os.path.join(root, 'images', (line + '.jpg'))
         class_name = list(line.split('/'))[0]
         if class_name != previous_class_name:
             class_id += 1
+            classwise_idx.append(len(images))
         target = class_id
 
         images.append((path, target))
@@ -45,8 +48,10 @@ def make_dataset(root, is_train):
         line = f.readline().strip()
     f.close()
 
-    return images
+    classwise_idx.append(len(images))
+    classwise_idx = np.array(classwise_idx)
 
+    return images, classwise_idx
 
 def transform_image(img, random):
     resize = transforms.Resize(256)
@@ -66,7 +71,7 @@ class Food101(data.Dataset):
     def __init__(self, is_train, random = True):
         root = '../../../srv/datasets/FoodLog/food-101/'
 
-        imgs = make_dataset(root, is_train)
+        imgs, classwise_idx = make_dataset(root, is_train)
         if len(imgs) == 0:
             raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
                                'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
@@ -75,6 +80,7 @@ class Food101(data.Dataset):
         self.imgs = imgs
         self.random = random
         self.is_train = is_train
+        self.classwise_idx = classwise_idx
 
     def __getitem__(self, idx : int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -91,3 +97,15 @@ class Food101(data.Dataset):
 
     def __len__(self):
         return len(self.imgs)
+
+class Food101OneClass(Food101):
+    def __init__(self, class_idx, is_train, random = True):
+        imgs = make_dataset_one_class(root, class_idx, is_train)
+        if len(imgs) == 0:
+            raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
+                               'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
+
+        self.root = root
+        self.imgs = imgs
+        self.random = random
+        self.is_train = is_train

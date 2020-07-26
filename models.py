@@ -12,8 +12,7 @@ class ResNet(nn.Module):
                 'Only 18, 34, 50, 101, and 152 layer model are defined for ResNet. Got {}'.format(layers))
 
         super(ResNet, self).__init__()
-        pretrained_model = torchvision.models.__dict__[
-            'resnet{}'.format(layers)](pretrained=pretrained)
+        pretrained_model = torchvision.models.__dict__['resnet{}'.format(layers)](pretrained = True)
 
         self.conv1 = pretrained_model._modules['conv1']
         self.bn1 = pretrained_model._modules['bn1']
@@ -24,9 +23,8 @@ class ResNet(nn.Module):
         self.layer2 = pretrained_model._modules['layer2']
         self.layer3 = pretrained_model._modules['layer3']
         self.layer4 = pretrained_model._modules['layer4']
-        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        # pretrained_model._modules['avgpool']
-        self.output = nn.Linear(512 * 4, 1)
+        self.avgpool = pretrained_model._modules['avgpool']
+        self.fc = nn.Linear(2048, 101)
 
         # clear memory
         del pretrained_model
@@ -42,6 +40,5 @@ class ResNet(nn.Module):
         x = self.layer4(x)
         x = self.avgpool(x)
         f = torch.flatten(x, 1)
-        y = self.output(f)
-
+        y = self.fc(f)
         return f, y

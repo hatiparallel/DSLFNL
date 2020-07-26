@@ -11,6 +11,10 @@ import train
 import test
 import logger
 from loader import Food101
+import criteria
+import models
+
+from correct import LabelCorrector
 
 model_names = ['resnet50']
 loss_names = ['cce', 'ccenoisy']
@@ -36,7 +40,7 @@ parser.add_argument('--epochs', default=30, type=int, metavar='N',
                     help='number of total epochs to run (default: 30)')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=32, type=int,
                     help='mini-batch size (default: 128)')
 parser.add_argument('-c', '--criterion', metavar='LOSS', default='cce',
                     choices=loss_names,
@@ -115,8 +119,7 @@ def main():
         print('=> creating Model ({}) ...'.format(args.arch))
 
         if args.arch == 'resnet50':
-            model = torchvision.models.resnet50(pretrained = True)
-            model.fc = nn.Linear(512*4, 101)
+            model = models.ResNet(50)
         else:
             raise RuntimeError('model not found')
 
@@ -125,7 +128,7 @@ def main():
         
     # define loss function (criterion) and optimizer
     if args.criterion == 'cce' or args.criterion == 'ccenoisy':
-        criterion = nn.CrossEntropyLoss().cuda()
+        criterion = criteria.NoisyCrossEntropyLoss(0.).cuda()
     else:
         raise RuntimeError('loss function not found')
 
@@ -146,7 +149,16 @@ def main():
     train_logger, test_logger = None, None
 
     for epoch in range(args.start_epoch, args.epochs):
-        train_result = train.train(train_loader, model, criterion, optimizer)
+        corrector = None
+
+        if args.criterion == 'ccenoisy' and epoch >= 0:
+            criterion.alpha = 0.5
+
+            corrector = LabelCorrector(1280, 8)
+
+            corrector.save_prototypes(train_set, model)
+
+        train_result = train.train(train_loader, model, criterion, optimizer, corrector)
 
         if epoch == 0:
             train_logger = logger.Logger(output_directory, train_result, train_csv)

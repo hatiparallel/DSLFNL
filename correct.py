@@ -3,7 +3,7 @@ import numpy as np
 import math
 
 
-class LabelCorrecter():
+class LabelCorrector():
     """
     ノイズの入ったラベルを上書きするためのモジュール．
     n : 各クラスごとの全体のデータ数．
@@ -110,17 +110,15 @@ class LabelCorrecter():
 
         return eta
 
-    def decide_features_prototype_for_class(self, features : np.array) -> np.array:
+    def _decide_features_prototype_for_class(self, features : np.array) -> np.array:
         """
         あるクラスの特徴量からプロトタイプを決める．
         Args
-            features : クラス内の全sampleの特徴量ベクトル．size : (n, d,)
+            features : クラス内のsampleの特徴量ベクトル．size : (m, d,)
         Returns
             そのクラスのp個のプロトタイプの特徴量．
         """
-        # features : (num_samples, size_features,)
-        featurs = np.random.choice(features, size = self.m, replace = False)
-        # features : (m, size_features,)
+        
         similarity_matrix = self._get_similarity_matrix(features)
         rho = _get_rho(similarity_matrix)
         eta = _get_eta(similarity_matrix, rho)
@@ -133,7 +131,7 @@ class LabelCorrecter():
 
         return features_for_sort[0][::-1][:self.p]
 
-    def save_prototype(self, features_all : np.array) -> np.array:
+    def save_prototypes(self, train_set, model) -> np.array:
         """
         すべてのsampleの特徴量から各クラスのプロトタイプを決める．
         プロトタイプはクラス変数として保持する．
@@ -143,30 +141,42 @@ class LabelCorrecter():
         Returns
             None
         """
-        self.prototype = np.array([decide_features_prototype_for_class(f) for f in features_all])
 
-    def get_modified_labels(self, features_input : np.array) -> np.array:
+        classwise_idx = train_set.classwise_idx
+
+        prototypes = []
+
+        print(classwise_idx)
+
+        for i in range(len(classwise_idx) - 1):
+            idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = self.m, replace = False)
+            input = train_set[idx_choosen]
+            features, _ = model(input.cuda()).cpu().numpy()
+            prototypes.append(self._decide_features_prototype_for_class(features))
+
+        self.prototype = np.array(prototypes)
+
+    def get_modified_labels(self, features_input : np.array) -> torch.Tensor:
         """
         プロトタイプを既に保持している状態で全てのデータのラベルを上書きする．
         Args
-            features_input : すべての入力データの特徴量．size : (n, d,)
+            features_input : 入力データの特徴量．size : (n, d,)
         Returns
-            すべてのデータのラベル．size : (n,)
+            与えられたすべてのデータのラベル．size : (n,)
         """
         features_prototype = self.prototype
-        # input : (num_input, size_feature,)
-        # prototype : (num_class, num_prototype, size_feature,)
+        # input : (n, d,)
+        # prototype : (c, p, d,)
 
-        sims = get_cosine_similarity_for_matrix(features_input, features_prototype)
-
-        # sims : (num_input, num_class, num_prototype,)
+        sims = self._get_cosine_similarity_for_matrix(features_input, features_prototype)
+        # sims : (n, c, p,)
 
         sims = np.mean(sims, axis = 2)
-
-        # sims : (num_input, num_class,)
+        # sims : (n, c,)
 
         labels = np.argmax(sims, axis = 1)
+        # labels : (n,)
 
-        # labels : (num_input,)
+        labels = torch.from_numpy(labels)
 
         return labels

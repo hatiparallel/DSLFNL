@@ -151,10 +151,10 @@ class LabelCorrector():
         print(classwise_idx)
 
         for i in range(len(classwise_idx) - 1):
-            division = 1
+            division = 10
             features_per_class = []
             for j in range(division):
-                idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = 128 // division, replace = False)
+                idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = self.m // division, replace = False)
                 input = torch.cat([torch.unsqueeze(train_set[ic][0], 0) for ic in idx_choosen], 0)
                 features, _ = model(input.cuda())
                 features = features.detach().cpu().numpy()

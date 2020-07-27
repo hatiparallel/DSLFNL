@@ -154,7 +154,7 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         corrector = None
 
-        if args.criterion == 'ccenoisy' and epoch >= 0:
+        if args.criterion == 'ccenoisy' and epoch > 0:
             criterion.alpha = 0.5
 
             corrector = LabelCorrector(1280, 8)

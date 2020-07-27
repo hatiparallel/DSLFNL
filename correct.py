@@ -31,7 +31,7 @@ class LabelCorrector():
         """
         return np.dot(x, y) / (np.linalg.norm(x)*np.linalg.norm(y))
 
-    def _get_cosine_similarity_for_matrix(self, x, y, axis):
+    def _get_cosine_similarity_for_matrix(self, x, y):
         """
         2つのベクトル群のcos類似度を返す．
         Args
@@ -41,6 +41,7 @@ class LabelCorrector():
             xとyのcos類似度．
             size : (n_x, c, n_y,)
         """
+        print(x.shape)
         y = np.reshape(y, (*(y.shape), 1))
         x_dim = x.ndim
         y_dim = y.ndim
@@ -57,7 +58,7 @@ class LabelCorrector():
         """
         r = range(len(features))
         # norms = np.sqrt(np.sum(features**2, axis = 1))
-        return np.array([(self._get_cosine_similarity(features[i], features[j]) for i in r) for j in r])
+        return np.array([[self._get_cosine_similarity(features[i], features[j]) for i in r] for j in r])
 
     def _get_rho(self, similarity_matrix : np.array) -> np.array:
         """
@@ -72,8 +73,9 @@ class LabelCorrector():
             rhoのarray．size : (m,)
             [i]にi番目のsampleのrhoが入っている．
         """
-        similarity_array = similarity_matrix.flatten()
-        threshold = np.sort(similarity_array)[int(len(similarity_array)*0.6)]
+        similarity_array = np.ravel(similarity_matrix)
+        similarity_array_sorted = np.sort(similarity_array)
+        threshold = similarity_array_sorted[int(len(similarity_array)*0.6)]
         
         return np.sum(np.sign(similarity_matrix - threshold), axis = 1)
 
@@ -120,16 +122,16 @@ class LabelCorrector():
         """
         
         similarity_matrix = self._get_similarity_matrix(features)
-        rho = _get_rho(similarity_matrix)
-        eta = _get_eta(similarity_matrix, rho)
+        rho = self._get_rho(similarity_matrix)
+        eta = self._get_eta(similarity_matrix, rho)
 
         features = features[eta < 0.95]
         rho = rho[eta < 0.95]
 
-        features_for_sort = np.array([features, rho])
-        features_for_sort = features_for_sort[:, features_for_sort[1, :].argsort()]
+        # features_for_sort = [features, rho]
+        features_sorted = features[rho.argsort()]
 
-        return features_for_sort[0][::-1][:self.p]
+        return features_sorted[::-1][:self.p]
 
     def save_prototypes(self, train_set, model) -> np.array:
         """
@@ -149,12 +151,20 @@ class LabelCorrector():
         print(classwise_idx)
 
         for i in range(len(classwise_idx) - 1):
-            idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = self.m, replace = False)
-            input = train_set[idx_choosen]
-            features, _ = model(input.cuda()).cpu().numpy()
-            prototypes.append(self._decide_features_prototype_for_class(features))
+            division = 1
+            features_per_class = []
+            for j in range(division):
+                idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = 128 // division, replace = False)
+                input = torch.cat([torch.unsqueeze(train_set[ic][0], 0) for ic in idx_choosen], 0)
+                features, _ = model(input.cuda())
+                features = features.detach().cpu().numpy()
 
-        self.prototype = np.array(prototypes)
+                features_per_class.append(features)
+
+            features_per_class = np.concatenate(features_per_class, 0)
+            prototypes.append(self._decide_features_prototype_for_class(features_per_class))
+
+        self.prototypes = np.array(prototypes)
 
     def get_modified_labels(self, features_input : np.array) -> torch.Tensor:
         """
@@ -164,11 +174,12 @@ class LabelCorrector():
         Returns
             与えられたすべてのデータのラベル．size : (n,)
         """
-        features_prototype = self.prototype
+        features_prototype = self.prototypes
         # input : (n, d,)
         # prototype : (c, p, d,)
 
         sims = self._get_cosine_similarity_for_matrix(features_input, features_prototype)
+        print(sims.shape)
         # sims : (n, c, p,)
 
         sims = np.mean(sims, axis = 2)

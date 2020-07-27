@@ -16,16 +16,17 @@ def train(train_loader, model, criterion, optimizer, corrector):
     for i, (input, target) in enumerate(train_loader):
         target_modified = None
 
-        if corrector is not None:
-            target_modified = corrector.get_modified_labels(input.numpy()).cuda()
-
 
         input, target = input.cuda(), target.cuda()
         data_time = time.time() - end
 
         # compute pred
         end = time.time()
-        _, pred = model(input)
+        features, pred = model(input)
+
+        if corrector is not None:
+            target_modified = corrector.get_modified_labels(features.detach().cpu().numpy()).cuda()
+
         loss = criterion(pred, target, target_modified)
 
         optimizer.zero_grad()

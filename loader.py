@@ -11,6 +11,8 @@ from typing import Tuple
 
 from PIL import Image
 
+import glob
+
 IMG_EXTENSIONS = [
     '.png',
 ]
@@ -19,16 +21,43 @@ IMG_EXTENSIONS = [
 def is_image_file(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
+def make_dataset_by_glob(root, classnames_file):
+    class_id = 0
+    images = []
 
-def make_dataset(root, is_train):
-    datanames_file = os.path.join(root, 'meta', 'train.txt')
-    if not is_train:
-        datanames_file = os.path.join(root, 'meta', 'test.txt')
+    f = open(classnames_file, 'r')
+    
+    line = f.readline()
+    line = f.readline().strip()
 
+    classwise_idx = [0]
+
+    while line:
+        path = os.path.join(root, 'images', line, '*.jpg')
+        impath_list = glob.glob(path)
+        target = class_id
+
+        for impath in impath_list:
+            images.append((impath, target))
+
+        classwise_idx.append(len(images))
+
+        line = f.readline().strip()
+        class_id += 1
+    f.close()
+
+    print('dataset length : {}'.format(len(images)))
+
+    classwise_idx = np.array(classwise_idx)
+
+    return images, classwise_idx
+
+def make_dataset(root, datanames_file):
     class_id = 0
     images = []
 
     f = open(datanames_file, 'r')
+
     line = f.readline().strip()
     previous_class_name = list(line.split('/'))[0]
 
@@ -36,6 +65,10 @@ def make_dataset(root, is_train):
 
     while line:
         path = os.path.join(root, 'images', (line + '.jpg'))
+        if not os.path.exists(path):
+            print('does not exist : ' + path)
+            line = f.readline().strip()
+            continue
         class_name = list(line.split('/'))[0]
         if class_name != previous_class_name:
             class_id += 1
@@ -47,6 +80,8 @@ def make_dataset(root, is_train):
         previous_class_name = class_name
         line = f.readline().strip()
     f.close()
+
+    print('dataset length : {}'.format(len(images)))
 
     classwise_idx.append(len(images))
     classwise_idx = np.array(classwise_idx)
@@ -69,9 +104,13 @@ def transform_image(img, random):
 class Food101(data.Dataset):
 
     def __init__(self, is_train, random = True):
-        root = '../../../srv/datasets/FoodLog/food-101/'
+        root = '../../../srv/datasets/FoodLog/food-101'
 
-        imgs, classwise_idx = make_dataset(root, is_train)
+        datanames_file = os.path.join(root, 'meta', 'train.txt')
+        if not is_train:
+            datanames_file = os.path.join(root, 'meta', 'test.txt')
+
+        imgs, classwise_idx = make_dataset(root, datanames_file)
         if len(imgs) == 0:
             raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
                                'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
@@ -98,9 +137,13 @@ class Food101(data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-class Food101OneClass(Food101):
-    def __init__(self, class_idx, is_train, random = True):
-        imgs = make_dataset_one_class(root, class_idx, is_train)
+class Food101n(Food101):
+    def __init__(self, is_train, random = True):
+        root = '../../../srv/datasets/food-101n/Food-101N_release'
+
+        classnames_file = os.path.join(root, 'meta', 'classes.txt')
+
+        imgs, classwise_idx = make_dataset_by_glob(root, classnames_file)
         if len(imgs) == 0:
             raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
                                'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
@@ -109,3 +152,4 @@ class Food101OneClass(Food101):
         self.imgs = imgs
         self.random = random
         self.is_train = is_train
+        self.classwise_idx = classwise_idx

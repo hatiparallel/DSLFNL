@@ -10,7 +10,7 @@ import misc
 import train
 import test
 import logger
-from loader import Food101
+from loader import Food101, Food101n
 import criteria
 import models
 
@@ -19,7 +19,7 @@ from correct import LabelCorrector
 model_names = ['resnet50']
 loss_names = ['cce', 'ccenoisy']
 
-data_names = ['food101']
+data_names = ['Food101n']
 
 parser = argparse.ArgumentParser(description='UTKFace Training')
 
@@ -29,11 +29,11 @@ parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet50',
                     help='model architecture: ' +
                     ' | '.join(model_names) +
                     ' (default: resnet50)')
-parser.add_argument('--data', metavar='DATA', default='Food101',
+parser.add_argument('--data', metavar='DATA', default='Food101n',
                     choices=data_names,
                     help='dataset: ' +
                     ' | '.join(data_names) +
-                    ' (default: food101)')
+                    ' (default: Food101n)')
 
 # arguments for the epochs, batchsize, loss
 parser.add_argument('--epochs', default=30, type=int, metavar='N',
@@ -85,8 +85,8 @@ def main():
     best_txt = os.path.join(output_directory, 'best.txt')
     
     print('=> creating data loaders ...')
-    if args.data == 'Food101':
-        train_set = Food101(True, random = True)
+    if args.data == 'Food101n':
+        train_set = Food101n(True, random = True)
         test_set = Food101(False, random = True)
     else:
         raise RuntimeError('Dataset not found.' +

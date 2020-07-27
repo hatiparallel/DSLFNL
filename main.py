@@ -10,7 +10,7 @@ import misc
 import train
 import test
 import logger
-from loader import Food101, Food101n
+from loader import Food101, Food101n, Clothing1M
 import criteria
 import models
 
@@ -19,7 +19,7 @@ from correct import LabelCorrector
 model_names = ['resnet50']
 loss_names = ['cce', 'ccenoisy']
 
-data_names = ['Food101n']
+data_names = ['Food101n', 'Clothing1M']
 
 parser = argparse.ArgumentParser(description='UTKFace Training')
 
@@ -88,6 +88,9 @@ def main():
     if args.data == 'Food101n':
         train_set = Food101n(True, random = True)
         test_set = Food101(False, random = True)
+    elif args.data == 'Clothing1M':
+        train_set = Clothing1M(True, random = True)
+        test_set = Clothing1M(False, random = True)
     else:
         raise RuntimeError('Dataset not found.' +
                            'The dataset must be either of Food101 or Clothing1M.')

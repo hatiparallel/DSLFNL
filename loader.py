@@ -52,7 +52,7 @@ def make_dataset_by_glob(root, classnames_file):
 
     return images, classwise_idx
 
-def make_dataset(root, datanames_file):
+def make_dataset_for_food101(root, datanames_file):
     class_id = 0
     images = []
 
@@ -88,6 +88,47 @@ def make_dataset(root, datanames_file):
 
     return images, classwise_idx
 
+
+def make_dataset_for_clothing1M(root, datanames_file):
+    class_num = 14
+
+    images = []
+    classwise_images = [[] for i in range(class_num)]
+
+    f = open(datanames_file, 'r')
+
+    line = f.readline().strip()
+
+    classwise_idx
+
+    while line:
+        path, target = line.split()
+        path = os.path.join(root, path)
+
+        if not os.path.exists(path):
+            print('does not exist : ' + path)
+            line = f.readline().strip()
+            continue
+
+        target = int(target)
+
+        classwise_images[target].append((path, target))
+        
+        line = f.readline().strip()
+    f.close()
+
+    print('dataset length : {}'.format(len(images)))
+
+    classwise_idx = [0]
+
+    for i in range(class_num):
+        classwise_idx.append(classwise_idx[i] + len(classwise_images[i]))
+    
+    images = np.concatenate(classwise_images)
+    classwise_idx = np.array(classwise_idx)
+
+    return images, classwise_idx
+
 def transform_image(img, random):
     resize = transforms.Resize(256)
     crop = transforms.RandomCrop(224)
@@ -102,7 +143,6 @@ def transform_image(img, random):
 
 
 class Food101(data.Dataset):
-
     def __init__(self, is_train, random = True):
         root = '../../../srv/datasets/FoodLog/food-101'
 
@@ -110,7 +150,7 @@ class Food101(data.Dataset):
         if not is_train:
             datanames_file = os.path.join(root, 'meta', 'test.txt')
 
-        imgs, classwise_idx = make_dataset(root, datanames_file)
+        imgs, classwise_idx = make_dataset_for_food101(root, datanames_file)
         if len(imgs) == 0:
             raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
                                'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
@@ -153,3 +193,35 @@ class Food101n(Food101):
         self.random = random
         self.is_train = is_train
         self.classwise_idx = classwise_idx
+
+class Clothing1M(data.Dataset):
+    def __init__(self, is_train, random = True):
+        root = '../../../srv/datasets/Clothing1M'
+
+        datanames_file = os.path.join(root, 'noisy_label_kv.txt')
+        if not is_train:
+            datanames_file = os.path.join(root, 'clean_label_kv.txt')
+
+        imgs, classwise_idx = make_dataset_for_clothing1M(root, datanames_file)
+        if len(imgs) == 0:
+            raise(RuntimeError('Found 0 images in subfolders of: ' + root + '\n'
+                               'Supported image extensions are: ' + ','.join(IMG_EXTENSIONS)))
+
+        self.root = root
+        self.imgs = imgs
+        self.random = random
+        self.is_train = is_train
+        self.classwise_idx = classwise_idx
+
+    def __getitem__(self, idx : int) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            index
+
+        Returns:
+            tuple: (input_tensor, target_tensor)
+        """
+        path, target = self.imgs[idx]
+        target = torch.tensor(target, requires_grad = False)
+        input_tensor = transform_image(Image.open(path).convert('RGB'), random = self.random)
+        return input_tensor, target

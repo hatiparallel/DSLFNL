@@ -6,7 +6,7 @@ import math
 class LabelCorrector():
     """
     ノイズの入ったラベルを上書きするためのモジュール．
-    n : 各クラスごとの全体のデータ数．
+    n : 各クラスごとのバッチごとのデータ数．
     m : 各クラスごとのサンプリングするデータ数．
     p : 各クラスごとのプロトタイプ数．
     c : クラス数．
@@ -41,11 +41,8 @@ class LabelCorrector():
             xとyのcos類似度．
             size : (n_x, c, n_y,)
         """
-        print(x.shape)
         y = np.reshape(y, (*(y.shape), 1))
-        x_dim = x.ndim
-        y_dim = y.ndim
-        return np.squeeze(np.dot(x, y) / np.dot(np.linalg.norm(x, axis = x_dim - 1, keepdims = True), np.linalg.norm(y, axis = y_dim - 2, keepdims = True)), -1)
+        return np.squeeze(np.dot(x, y) / np.dot(np.linalg.norm(x, axis = 1, keepdims = True), np.linalg.norm(y, axis = 2, keepdims = True)), -1)
 
     def _get_similarity_matrix(self, features : np.array) -> np.array:
         """

@@ -5,7 +5,7 @@ import torchvision.models
 
 
 class ResNet(nn.Module):
-    def __init__(self, layers):
+    def __init__(self, layers, output_size):
 
         if layers not in [18, 34, 50, 101, 152]:
             raise RuntimeError(
@@ -24,7 +24,7 @@ class ResNet(nn.Module):
         self.layer3 = pretrained_model._modules['layer3']
         self.layer4 = pretrained_model._modules['layer4']
         self.avgpool = pretrained_model._modules['avgpool']
-        self.fc = nn.Linear(2048, 101)
+        self.fc = nn.Linear(2048, output_size)
 
         # clear memory
         del pretrained_model

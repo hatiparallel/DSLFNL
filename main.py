@@ -122,7 +122,10 @@ def main():
         print('=> creating Model ({}) ...'.format(args.arch))
 
         if args.arch == 'resnet50':
-            model = models.ResNet(50)
+            if args.data == 'Food101N':
+                model = models.ResNet(50, 101)
+            else:
+                model = models.ResNet(50, 14)
         else:
             raise RuntimeError('model not found')
 

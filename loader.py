@@ -99,8 +99,6 @@ def make_dataset_for_clothing1M(root, datanames_file):
 
     line = f.readline().strip()
 
-    classwise_idx
-
     while line:
         path, target = line.split()
         path = os.path.join(root, path)
@@ -121,10 +119,12 @@ def make_dataset_for_clothing1M(root, datanames_file):
 
     classwise_idx = [0]
 
+    images = []
+
     for i in range(class_num):
         classwise_idx.append(classwise_idx[i] + len(classwise_images[i]))
-    
-    images = np.concatenate(classwise_images)
+        images = images + classwise_images[i]
+
     classwise_idx = np.array(classwise_idx)
 
     return images, classwise_idx
@@ -194,6 +194,7 @@ class Food101n(Food101):
         self.is_train = is_train
         self.classwise_idx = classwise_idx
 
+
 class Clothing1M(data.Dataset):
     def __init__(self, is_train, random = True):
         root = '../../../srv/datasets/Clothing1M'
@@ -225,3 +226,6 @@ class Clothing1M(data.Dataset):
         target = torch.tensor(target, requires_grad = False)
         input_tensor = transform_image(Image.open(path).convert('RGB'), random = self.random)
         return input_tensor, target
+
+    def __len__(self):
+        return len(self.imgs)

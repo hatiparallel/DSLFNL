@@ -148,8 +148,6 @@ class LabelCorrector():
 
         prototypes = []
 
-        print(classwise_idx)
-
         for i in range(len(classwise_idx) - 1):
             division = 10
             features_per_class = []
@@ -179,7 +177,6 @@ class LabelCorrector():
         # prototype : (c, p, d,)
 
         sims = self._get_cosine_similarity_for_matrix(features_input, features_prototype)
-        print(sims.shape)
         # sims : (n, c, p,)
 
         sims = np.mean(sims, axis = 2)

@@ -158,7 +158,7 @@ def main():
         corrector = None
 
         if args.criterion == 'ccenoisy' and epoch > 0:
-            criterion.alpha = 0.5
+            criterion.set_alpha(0.5)
 
             corrector = LabelCorrector(1280, 8)
 

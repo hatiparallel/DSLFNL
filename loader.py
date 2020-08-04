@@ -115,8 +115,6 @@ def make_dataset_for_clothing1M(root, datanames_file):
         line = f.readline().strip()
     f.close()
 
-    print('dataset length : {}'.format(len(images)))
-
     classwise_idx = [0]
 
     images = []
@@ -126,6 +124,8 @@ def make_dataset_for_clothing1M(root, datanames_file):
         images = images + classwise_images[i]
 
     classwise_idx = np.array(classwise_idx)
+
+    print('dataset length : {}'.format(len(images)))
 
     return images, classwise_idx
 

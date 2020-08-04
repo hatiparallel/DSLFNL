@@ -40,6 +40,8 @@ parser.add_argument('--epochs', default=30, type=int, metavar='N',
                     help='number of total epochs to run (default: 30)')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N',
                     help='manual epoch number (useful on restarts)')
+parser.add_argument('--change-epoch', default = 0, type = int, metavar = 'N',
+                    help = 'epoch number to change alpha')
 parser.add_argument('-b', '--batch-size', default=128, type=int,
                     help='mini-batch size (default: 128)')
 parser.add_argument('-c', '--criterion', metavar='LOSS', default='cce',
@@ -72,8 +74,12 @@ print(args)
 
 
 def main():
+    # random.seed(0)
     torch.manual_seed(0)
     torch.random.manual_seed(0)
+    # np.random.seed(0) 
+    # torch.cuda.manual_seed(0)
+    # torch.backends.cudnn.deterministic = True
 
     # create results folder, if not already exists
     output_directory = misc.get_output_directory(args)
@@ -122,7 +128,7 @@ def main():
         print('=> creating Model ({}) ...'.format(args.arch))
 
         if args.arch == 'resnet50':
-            if args.data == 'Food101N':
+            if args.data == 'Food101n':
                 model = models.ResNet(50, 101)
             else:
                 model = models.ResNet(50, 14)
@@ -157,7 +163,7 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         corrector = None
 
-        if args.criterion == 'ccenoisy' and epoch > 0:
+        if args.criterion == 'ccenoisy' and epoch >= args.change_epoch:
             criterion.set_alpha(0.5)
 
             corrector = LabelCorrector(1280, 8)

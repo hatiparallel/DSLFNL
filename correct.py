@@ -130,7 +130,7 @@ class LabelCorrector():
 
         return features_sorted[::-1][:self.p]
 
-    def save_prototypes(self, train_set, model) -> np.array:
+    def save_prototypes(self, train_set, model) -> None:
         """
         すべてのsampleの特徴量から各クラスのプロトタイプを決める．
         プロトタイプはクラス変数として保持する．
@@ -140,6 +140,7 @@ class LabelCorrector():
         Returns
             None
         """
+        model.eval()
 
         classwise_idx = train_set.classwise_idx
 
@@ -148,9 +149,10 @@ class LabelCorrector():
         for i in range(len(classwise_idx) - 1):
             division = 10
             features_per_class = []
+            idx_chosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = self.m, replace = False)
             for j in range(division):
-                idx_choosen = np.random.choice(np.arange(classwise_idx[i], classwise_idx[i + 1]), size = self.m // division, replace = False)
-                input = torch.cat([torch.unsqueeze(train_set[ic][0], 0) for ic in idx_choosen], 0)
+                idx_chosen_subset = idx_chosen[j*self.m//division : (j + 1)*self.m//division]          
+                input = torch.cat([torch.unsqueeze(train_set[ic][0], 0) for ic in idx_chosen_subset], 0)
                 features, _ = model(input.cuda())
                 features = features.detach().cpu().numpy()
 
@@ -183,5 +185,6 @@ class LabelCorrector():
         # labels : (n,)
 
         labels = torch.from_numpy(labels)
+        labels.requires_grad = False
 
         return labels
